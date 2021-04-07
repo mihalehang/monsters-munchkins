@@ -57,7 +57,7 @@ Generalized Algorithm:
 	a. if on any side there are more monsters and munchkins, reject.
 	b. if on both sides the total number of monsters is greater than the number of munchkins, reject.
 	c. ????
-2. 
+2. ???????????
 
 
 
