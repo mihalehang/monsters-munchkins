@@ -1,11 +1,11 @@
 # monsters-munchkins
 CS 2800 Final Project
-Members:\
+Members:
 
-Jamie Lin\
+Jamie Lin
 
-Anna Yang\
+Anna Yang
 
-Harris Bubalo\
+Harris Bubalo
 
-Michael Huang\
+Michael Huang
