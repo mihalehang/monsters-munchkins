@@ -1,0 +1,56 @@
+Monsters and Munchkins
+
+
+Initial Conditions:
+There are any number of 'monsters' (M) and 'munchkins' (m) on the left and right side of a river. There is a boat that can ferry a set maximum number (B) of 
+monsters and munchkins across, with a minimum of 1 passenger (in order to row the boat). The boat always starts on the left side. The desired end state is 
+when all monsters and munchkins are on the right side of the river. There is one condition: at any given time, there must be no more monsters than munchkins 
+on any given side, and on the boat, unless there are no munchkins on that side or boat.
+
+Starting Variables:
+1. Number of Monsters on the left side
+2. Number of Monsters on the right side
+3. Number of Munchkins on the left side
+4. Number of Munchkins on the right side
+5. Boat maximum capacity
+
+Ex. Starting State
+
+M:4 m:4 [B:4] M:0 m:0 - (4 monsters and 4 munchkins starting on the left side of the river, and none on the right, with max boat capacity of 4)
+
+
+Traditional Algorithm Pseudo-code:
+(Monsters and Munchkins start only on the left side, M = m, B = 4)
+
+1. In the starting state,
+	a. if M = m = 0, accept.
+2. If there M+m <= B = 4, bring all passengers in one trip, then accept.
+3. If m = 3
+	a. bring 2 monsters and 2 munchkins to the right side
+	b. bring 1 monster and 1 munchkin to the left side
+	c. bring the rest to the right side
+4. if m = 4
+	a. while (!accept),
+		i. bring 2 monsters and 2 munchkins to the right side.
+		ii. bring 1 monster and 1 munchkin back to the left side.
+5. If m > 4
+	a. while (m > 4) on the left side,
+		i. bring 2 monsters and 2 munchkins to the right side.
+		ii. bring 1 monster and 1 munchkin back to the left side.
+	b. move all of the remaining (m = 4) munchkins to the right side.
+	c. while ( !accept ) on the left side
+		i. bring 1 monster to the left side
+		ii. bring maximum number monsters to the right side
+
+
+Generalized Algorithm:
+
+1. In the starting state,
+	a. if on any side there are more monsters and munchkins, reject.
+	b. if on both sides the total number of monsters is greater than the number of munchkins, reject.
+	c. ????
+2. 
+
+
+
+
