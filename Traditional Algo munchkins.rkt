@@ -1,64 +1,43 @@
-;; Represents the number of Monsters
-(defdata monsters nat)
-;; Represents the number of Munchkins
-(defdata munchkins nat)
-;; Represents the capacity of the boat
-(defdata capacity nat)
-;; Represents which side the boat is on
-(defdata side (oneof 'left 'right))
-
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname |Munchkins code|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 ;; Direction statement
-(defun move (mon mun side)
+(define (move mon mun side)
   (list 'move mon 'monsters 'and mun 'munchkins 'to 'the side))
 
-;; Number of Monsters and Munchkins respectively on left bank
-(defdata left-count (list monsters munchkins))
-
-;; Number of Monsters and Munchkins respectively on left bank
-(defdata right-count (list monsters munchkins))
-
-;; Capacity and the side the boat is on
-(defdata boat (list capacity side))
-
-;; DONT FORGET TO WRITE CONTRACTS YALL ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Traditional Algorithm
-
-;; Prints the directions in case that the 
-;; Monsters and Munchkins counts are greater than 4
-(defun helper (lc b rc)
+(define (helper lc b rc)
   (cond 
    ((and (> (second lc) 4)
-         (equal (second b) 'left)) (cons (move 2 2 'right)
+         (equal? (second b) 'left)) (cons (move 2 2 'right)
                                          (helper (list (- (first lc) 2) 
                                                        (- (second lc) 2))
                                                  (list 4 'right)
                                                  (list (+ (first rc) 2)
                                                        (+ (second rc) 2)))))
-   ((and (>= (second lc) 4)
-         (equal (second b) 'right)) (cons (move 1 1 'left)
+   ((and (>= (second lc) 0)
+         (equal? (second b) 'right)) (cons (move 1 1 'left)
                                          (helper (list (+ (first lc) 1) 
                                                        (+ (second lc) 1))
                                                  (list 4 'left)
                                                  (list (- (first rc) 1)
                                                        (- (second rc) 1)))))
    ((and (= (second lc) 4)
-         (equal (second b) 'left)) (cons (move 0 4 'right)
+         (equal? (second b) 'left)) (cons (move 0 4 'right)
                                          (helper (list (first lc)
                                                        (- (second lc) 4))
                                                  (list 4 'right)
                                                  (list (first rc)
                                                        (+ (second rc) 4)))))
    ((and (> (first lc) 4)
-         (equal (second b) 'left)) (cons (move 4 0 'right)
+         (equal? (second b) 'left)) (cons (move 4 0 'right)
                                          (helper (list (- (first lc) 4)
                                                        (second lc))
                                                  (list 4 'right)
                                                  (list (+ (second rc) 4)
                                                        (second lc)))))
    ((and (<= (first lc) 4)
-         (equal (second b) 'left)) (move (first lc) 0 'right))
-   (t (cons (move 1 0 'left)
+         (equal? (second b) 'left)) (list (move (first lc) 0 'right)))
+   (else (cons (move 1 0 'left)
             (helper (list (+ (first lc) 1)
                           (second lc))
                     (list 4 'left)
@@ -67,7 +46,7 @@
             
 
 ;; Prints the rest of the moves
-(defun tradalg (lc b rc)
+(define (tradalg lc b rc)
   (cond 
    ((and (= (first lc) 0) (= (second lc) 0)) '())
    ((<= (+ (first lc) (second lc)) 4) (move (first lc) (second lc) 'right))
@@ -80,6 +59,3 @@
                             (move 1 1 'left)
                             (move 2 2 'right)))
    ((> (second lc) 4) (helper lc b rc))))
-
-
-
