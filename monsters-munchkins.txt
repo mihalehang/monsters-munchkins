@@ -1,11 +1,11 @@
 Monsters and Munchkins
 
 
-Initial Conditions:
-There are any number of 'monsters' (M) and 'munchkins' (m) on the left and right side of a river. There is a boat that can ferry a set maximum number (B) of 
-monsters and munchkins across, with a minimum of 1 passenger (in order to row the boat). The boat always starts on the left side. The desired end state is 
-when all monsters and munchkins are on the right side of the river. There is one condition: at any given time, there must be no more monsters than munchkins 
-on any given side, and on the boat, unless there are no munchkins on that side or boat.
+Initial Conditions: There are any number of 'monsters' (M) and 'munchkins' (m) on the left and right side of a river.
+There is a boat that can ferry a set maximum number (B) of  monsters and munchkins across, with a minimum of 1 passenger
+(in order to row the boat). The boat always starts on the left side. The desired end state is  when all monsters and
+munchkins are on the right side of the river. There is one condition: at any given time, there must be no more monsters
+than munchkins  on any given side, and on the boat, unless there are no munchkins on that side or boat.
 
 Starting Variables:
 1. Number of Monsters on the left side
@@ -16,7 +16,8 @@ Starting Variables:
 
 Ex. Starting State
 
-M:4 m:4 [B:4] M:0 m:0 - (4 monsters and 4 munchkins starting on the left side of the river, and none on the right, with max boat capacity of 4)
+M:4 m:4 [B:4] M:0 m:0 - (4 monsters and 4 munchkins starting on the left side of the river, and none on the right, with
+max boat capacity of 4)
 
 
 Traditional Algorithm Pseudo-code:
@@ -43,7 +44,9 @@ Traditional Algorithm Pseudo-code:
 		ii. bring maximum number monsters to the right side
 
 Note:
-For starting states M != m, if M > m, the problem is not solveable. If M < m, simply move 2 munchkins to the right side, and 1 back to the left side, until M = m, and the boat is on the left side (ready to go to the right), and follow the Traditional Algorithm.
+For starting states M != m, if M > m, the problem is not solveable. If M < m, simply move 2 munchkins to the right side,
+and 1 back to the left side, until M = m, and the boat is on the left side (ready to go to the right), and follow the
+Traditional Algorithm.
 
 Note:
 It is trivial to imagine an algorithm for B > 4, as if it is possible with B = 4, simply
