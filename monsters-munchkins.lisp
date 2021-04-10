@@ -1,3 +1,68 @@
+; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+(make-event
+ (er-progn
+  (set-deferred-ttag-notes t state)
+  (value '(value-triple :invisible))))
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/base-theory" :dir :system :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/custom" :dir :system :ttags :all)
+
+;; guard-checking-on is in *protected-system-state-globals* so any
+;; changes are reverted back to what they were if you try setting this
+;; with make-event. So, in order to avoid the use of progn! and trust
+;; tags (which would not have been a big deal) in custom.lisp, I
+;; decided to add this here.
+;; 
+;; How to check (f-get-global 'guard-checking-on state)
+;; (acl2::set-guard-checking :nowarn)
+(acl2::set-guard-checking :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
+
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+; Non-events:
+;(set-guard-checking :none)
+
+(set-inhibit-warnings! "Invariant-risk" "theory")
+
+(in-package "ACL2")
+(redef+)
+(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp deferred-p))
+  state)
+
+(defun print-deferred-ttag-notes-summary (state)
+  (declare (xargs :stobjs state))
+  state)
+
+(defun notify-on-defttag (val active-book-name include-bookp state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp))
+  state)
+(redef-)
+
+(acl2::in-package "ACL2S")
+
+; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
+;$ACL2s-SMode$;ACL2s
 ;; Represents the number of Monsters
 (defdata monsters nat)
 ;; Represents the number of Munchkins
@@ -8,25 +73,38 @@
 (defdata side (oneof 'left 'right))
 
 ;; Direction statement
-(defun move (mon mun side)
+(definec move (mon :nat mun :nat side :symbol) :tl
   (list 'move mon 'monsters 'and mun 'munchkins 'to 'the side))
 
-;; Number of Monsters and Munchkins respectively on left bank
-(defdata left-count (list monsters munchkins))
-
-;; Number of Monsters and Munchkins respectively on left bank
-(defdata right-count (list monsters munchkins))
+;; Number of Monsters and Munchkins respectively on a river bank
+(defdata count (list monsters munchkins))
 
 ;; Capacity and the side the boat is on
-(defdata boat (list capacity side))
+(defdata boat (list capacity side))#|ACL2s-ToDo-Line|#
+
 
 ;; DONT FORGET TO WRITE CONTRACTS YALL ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+#|
+:ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
+           (> (+ (first lc) (first rc) (second lc) (second rc)) 4)
+           (implies (not (zp (second lc)))
+             (>= (second lc) (first lc)))
+           (implies (not (zp (second rc)))
+             (>= (second rc) (first rc)))
+           (implies (and (not (zp (second rc)))
+                         (equal (second b) 'right))
+             (and (>= (second rc) (first rc))
+                  (> (first rc) 0))))
+|#
 
 ;; Traditional Algorithm
 
 ;; Prints the directions in case that the 
 ;; Monsters and Munchkins counts are greater than 4
 (defun helper (lc b rc)
+  (declare (irrelevant rc))
   (cond 
    ((and (> (second lc) 4)
          (equal (second b) 'left)) (cons (move 2 2 'right)
@@ -54,16 +132,17 @@
                                          (helper (list (- (first lc) 4)
                                                        (second lc))
                                                  (list 4 'right)
-                                                 (list (+ (second rc) 4)
-                                                       (second lc)))))
+                                                 (list (+ (first rc) 4)
+                                                       (second rc)))))
    ((and (<= (first lc) 4)
          (equal (second b) 'left)) (move (first lc) 0 'right))
-   (t (cons (move 1 0 'left)
-            (helper (list (+ (first lc) 1)
-                          (second lc))
-                    (list 4 'left)
-                    (list (- (first rc) 1)
-                          (second rc)))))))
+   ((and (= (second lc) 0)
+         (equal (second b) 'right)) (cons (move 1 0 'left)
+                                          (helper (list (+ (first lc) 1)
+                                                        (second lc))
+                                                  (list 4 'left)
+                                                  (list (- (first rc) 1)
+                                                        (second rc)))))))
             
 
 ;; Prints the rest of the moves
