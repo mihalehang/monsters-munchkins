@@ -64,31 +64,39 @@
 ; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
 ;$ACL2s-SMode$;ACL2s
 ;; Represents the number of Monsters
-(defdata monsters nat)
+;(defdata monsters nat)
 ;; Represents the number of Munchkins
-(defdata munchkins nat)
+;(defdata munchkins nat)
 ;; Represents the capacity of the boat
-(defdata capacity nat)
+;(defdata capacity nat)
 ;; Represents which side the boat is on
 (defdata side (oneof 'left 'right))
 
 ;; Direction statement
-(definec move (mon :nat mun :nat side :symbol) :tl
+(definec move (mon :nat mun :nat side :side) :tl
   (list 'move mon 'monsters 'and mun 'munchkins 'to 'the side))
 
 ;; Number of Monsters and Munchkins respectively on a river bank
-(defdata count (list monsters munchkins))
+(defdata count (list nat nat))
 
 ;; Capacity and the side the boat is on
-(defdata boat (list capacity side))#|ACL2s-ToDo-Line|#
+(defdata boat (list nat side))#|ACL2s-ToDo-Line|#
 
 
 ;; DONT FORGET TO WRITE CONTRACTS YALL ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-#|
-:ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
-           (> (+ (first lc) (first rc) (second lc) (second rc)) 4)
+
+
+
+
+;; Traditional Algorithm
+
+;; Prints the directions in case that the 
+;; Monsters and Munchkins counts are greater than 4
+(definec helper (lc :count b :boat rc :count) :tl
+  :ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
+           (> (+ (first lc) (first rc) (second lc) (second rc)) 8)
            (implies (not (zp (second lc)))
              (>= (second lc) (first lc)))
            (implies (not (zp (second rc)))
@@ -96,15 +104,9 @@
            (implies (and (not (zp (second rc)))
                          (equal (second b) 'right))
              (and (>= (second rc) (first rc))
-                  (> (first rc) 0))))
-|#
-
-;; Traditional Algorithm
-
-;; Prints the directions in case that the 
-;; Monsters and Munchkins counts are greater than 4
-(defun helper (lc b rc)
-  (declare (irrelevant rc))
+                  (> (first rc) 0)))
+           (implies (zp (second rc))
+                    (zp (first rc))))
   (cond 
    ((and (> (second lc) 4)
          (equal (second b) 'left)) (cons (move 2 2 'right)
@@ -113,7 +115,7 @@
                                                  (list 4 'right)
                                                  (list (+ (first rc) 2)
                                                        (+ (second rc) 2)))))
-   ((and (>= (second lc) 4)
+   ((and (> (second lc) 0)
          (equal (second b) 'right)) (cons (move 1 1 'left)
                                          (helper (list (+ (first lc) 1) 
                                                        (+ (second lc) 1))
@@ -135,22 +137,26 @@
                                                  (list (+ (first rc) 4)
                                                        (second rc)))))
    ((and (<= (first lc) 4)
-         (equal (second b) 'left)) (move (first lc) 0 'right))
-   ((and (= (second lc) 0)
-         (equal (second b) 'right)) (cons (move 1 0 'left)
-                                          (helper (list (+ (first lc) 1)
-                                                        (second lc))
-                                                  (list 4 'left)
-                                                  (list (- (first rc) 1)
-                                                        (second rc)))))))
+         (equal (second b) 'left)) (list (move (first lc) 0 'right)))
+   (t (cons (move 1 0 'left)
+            (helper (list (+ (first lc) 1)
+                          (second lc))
+                    (list 4 'left)
+                    (list (- (first rc) 1)
+                          (second rc)))))))
             
+
+;
+(definec (lc :count b :boat rc :count) :tl
+  (
 
 ;; Prints the rest of the moves
 (defun tradalg (lc b rc)
   (cond 
    ((and (= (first lc) 0) (= (second lc) 0)) '())
-   ((<= (+ (first lc) (second lc)) 4) (move (first lc) (second lc) 'right))
-   ((= (second lc) 3) (list (move 2 2 'right)
+   ((and (<= (+ (first lc) (second lc)) 4)
+         (equal (second b) 'left)) (move (first lc) (second lc) 'right))
+   ((and (= (second lc) 3) (list (move 2 2 'right)
                             (move 1 1 'left)
                             (move 2 2 'right)))
    ((= (second lc) 4) (list (move 2 2 'right)
@@ -158,7 +164,7 @@
                             (move 2 2 'right)
                             (move 1 1 'left)
                             (move 2 2 'right)))
-   ((> (second lc) 4) (helper lc b rc))))
+   (t (helper lc b rc))))
 
 
 
