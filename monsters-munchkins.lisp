@@ -95,17 +95,30 @@
 ;; Prints the directions in case that the 
 ;; Monsters and Munchkins counts are greater than 4
 (definec helper (lc :count b :boat rc :count) :tl
+           ;; number of munchkins = number of monsters
   :ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
+           ;; ignore hardcoded cases from main function
            (> (+ (first lc) (first rc) (second lc) (second rc)) 8)
+           ;; if more than 0 munchkins on left side, 
+           ;; there should be more munchkins than monsters on left
            (implies (not (zp (second lc)))
              (>= (second lc) (first lc)))
+           ;; if more than 0 munchkins on right side, 
+           ;; there should be more munchkins than monsters on right
            (implies (not (zp (second rc)))
              (>= (second rc) (first rc)))
+           ;; if more than 0 munchkins on right side and
+           ;; boat is on the right side, there should be 
+           ;; more munchkins than monsters on right and there
+           ;; should be more than 0 monsters
            (implies (and (not (zp (second rc)))
                          (equal (second b) 'right))
              (and (>= (second rc) (first rc))
                   (> (first rc) 0)))
-           (implies (zp (second rc))
+           ;; if 0 munchkins on right side and boat is on left
+           ;; side, there should also be 0 monsters on right side
+           (implies (and (equal (second b) 'left)
+                         (zp (second rc)))
                     (zp (first rc))))
   (cond 
    ((and (> (second lc) 4)
