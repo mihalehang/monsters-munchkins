@@ -115,10 +115,9 @@
                          (equal (second b) 'right))
              (and (>= (second rc) (first rc))
                   (> (first rc) 0)))
-           ;; if 0 munchkins on right side and boat is on left
-           ;; side, there should also be 0 monsters on right side
-           (implies (and (equal (second b) 'left)
-                         (zp (second rc)))
+           ;; if 0 munchkins on right side there should 
+           ;; also be 0 monsters on right side
+           (implies (zp (second rc))
                     (zp (first rc))))
   (cond 
    ((and (> (second lc) 4)
