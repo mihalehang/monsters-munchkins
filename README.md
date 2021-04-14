@@ -1,11 +1,12 @@
 # monsters-munchkins
 CS 2800 Final Project
-Members:
+Members: Jamie Lin, Anna Yang, Harris Bubalo, Michael Huang
 
-Jamie Lin
+This is the repo for our 'Monsters and Munchkins' Project.
 
-Anna Yang
+It contains:
 
-Harris Bubalo
-
-Michael Huang
+* Our progress report
+* Our implementation of the traditional algorithm in Racket (functional)
+* Our implementation of the traditional algorithm in ACL2s (nonfunctional)
+* A text file with the pseudocode for the algorithm
