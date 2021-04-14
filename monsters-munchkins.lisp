@@ -1,68 +1,5 @@
-; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
-; (Nothing to see here!  Your actual file is after this initialization code);
-(make-event
- (er-progn
-  (set-deferred-ttag-notes t state)
-  (value '(value-triple :invisible))))
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
-
-;Common base theory for all modes.
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/base-theory" :dir :system :ttags :all)
 
 
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/custom" :dir :system :ttags :all)
-
-;; guard-checking-on is in *protected-system-state-globals* so any
-;; changes are reverted back to what they were if you try setting this
-;; with make-event. So, in order to avoid the use of progn! and trust
-;; tags (which would not have been a big deal) in custom.lisp, I
-;; decided to add this here.
-;; 
-;; How to check (f-get-global 'guard-checking-on state)
-;; (acl2::set-guard-checking :nowarn)
-(acl2::set-guard-checking :all)
-
-;Settings common to all ACL2s modes
-(acl2s-common-settings)
-;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
-
-(acl2::xdoc acl2s::defunc) ; almost 3 seconds
-
-; Non-events:
-;(set-guard-checking :none)
-
-(set-inhibit-warnings! "Invariant-risk" "theory")
-
-(in-package "ACL2")
-(redef+)
-(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
-  (declare (xargs :stobjs state)
-	   (ignore val active-book-name include-bookp deferred-p))
-  state)
-
-(defun print-deferred-ttag-notes-summary (state)
-  (declare (xargs :stobjs state))
-  state)
-
-(defun notify-on-defttag (val active-book-name include-bookp state)
-  (declare (xargs :stobjs state)
-	   (ignore val active-book-name include-bookp))
-  state)
-(redef-)
-
-(acl2::in-package "ACL2S")
-
-; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
-;$ACL2s-SMode$;ACL2s
 ;; Represents the number of Monsters
 ;(defdata monsters nat)
 ;; Represents the number of Munchkins
@@ -80,17 +17,13 @@
 (defdata count (list nat nat))
 
 ;; Capacity and the side the boat is on
-(defdata boat (list nat side))#|ACL2s-ToDo-Line|#
-
-
-;; DONT FORGET TO WRITE CONTRACTS YALL ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-
-
+(defdata boat (list nat side))
 
 ;; Traditional Algorithm
+
+;; Shouldn't have a function this long, running out of time to prove all of them
+;; Solution: simplify it into even more helper functions
+;; Move left and move right function... try to split off changes into other functions
 
 ;; Prints the directions in case that the 
 ;; Monsters and Munchkins counts are greater than 4
@@ -156,11 +89,44 @@
                     (list 4 'left)
                     (list (- (first rc) 1)
                           (second rc)))))))
-            
+
+;; find case that is terminating over time
+;; running out of time to terminate
+;; look for thing that is changing over time
+;; measure function, decreasing in every time step
+;; measure function has to decrease every time on the recursive calls
+;; figure out the measure function, closer to base case, base case will run
+;; proof will be a termination proof about helper
+;; termination proof is not enough to prove validity
+
+
+;; correctness proof => if (valid initial state), returns a valid final state
+;; if execute moves, all on the right side
+;; need a way to show that the steps get to the right state
+
+;; 1) function that takes in a list of moves and initial state => final state
+;; 2) (test? '(implies ...)) focus on this part FIRST
+;; 3) then think about prove algo is correct, part of that is defthm
+;; (if (and (s is a valid state) (l is a list of moves from running (helper s))) 
+;;  then the result of simulating l from state s is a valid final state)
+;; (test? '(implies ...))
+
+;; function that simulates moves (way easier)
+;; takes in list of moves and initial state => gives back final state
+;; move blank to blank and then does it, gives final state
+
+#|
+To-Do
+- write a measure function (termination proof is the meat)
+- write a simulator, (initial state and list of moves => execute them properly)
+- (test? '(implies ...))
+- after completion of (test? ...) then reach out to Josh :)
+- no need to broaden the invariants
+|#
 
 ;
-(definec (lc :count b :boat rc :count) :tl
-  (
+;(definec (lc :count b :boat rc :count) :tl
+  ;(
 
 ;; Prints the rest of the moves
 (defun tradalg (lc b rc)
