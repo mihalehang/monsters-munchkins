@@ -63,6 +63,7 @@
 
 ; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
 ;$ACL2s-SMode$;ACL2s
+(set-ccg-time-limit nil)
 ;; Represents the number of Monsters
 ;(defdata monsters nat)
 ;; Represents the number of Munchkins
@@ -79,104 +80,145 @@
 ;; Number of Monsters and Munchkins respectively on a river bank
 (defdata count (list nat nat))
 
-;; Capacity and the side the boat is on
-(defdata boat (list nat side))#|ACL2s-ToDo-Line|#
+#|
+(definec which-side (lc :count b :side rc :count) :tl
+  (declare (ignorable lc rc))
+  (if (equal b 'left)
+    (alg-left lc b rc)
+    (alg-right lc b rc)))
+|#
 
-
-;; DONT FORGET TO WRITE CONTRACTS YALL ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-
-
-
-;; Traditional Algorithm
-
-;; Prints the directions in case that the 
-;; Monsters and Munchkins counts are greater than 4
-(definec helper (lc :count b :boat rc :count) :tl
-           ;; number of munchkins = number of monsters
+(definec alg-left (lc :count b :side rc :count) :tl
+  (declare (ignorable lc b rc))
   :ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
-           ;; ignore hardcoded cases from main function
            (> (+ (first lc) (first rc) (second lc) (second rc)) 8)
-           ;; if more than 0 munchkins on left side, 
-           ;; there should be more munchkins than monsters on left
-           (implies (not (zp (second lc)))
-             (>= (second lc) (first lc)))
-           ;; if more than 0 munchkins on right side, 
-           ;; there should be more munchkins than monsters on right
-           (implies (not (zp (second rc)))
-             (>= (second rc) (first rc)))
-           ;; if more than 0 munchkins on right side and
-           ;; boat is on the right side, there should be 
-           ;; more munchkins than monsters on right and there
-           ;; should be more than 0 monsters
-           (implies (and (not (zp (second rc)))
-                         (equal (second b) 'right))
-             (and (>= (second rc) (first rc))
-                  (> (first rc) 0)))
-           ;; if 0 munchkins on right side there should 
-           ;; also be 0 monsters on right side
-           (implies (zp (second rc))
-                    (zp (first rc))))
-  (cond 
-   ((and (> (second lc) 4)
-         (equal (second b) 'left)) (cons (move 2 2 'right)
-                                         (helper (list (- (first lc) 2) 
-                                                       (- (second lc) 2))
-                                                 (list 4 'right)
-                                                 (list (+ (first rc) 2)
-                                                       (+ (second rc) 2)))))
-   ((and (> (second lc) 0)
-         (equal (second b) 'right)) (cons (move 1 1 'left)
-                                         (helper (list (+ (first lc) 1) 
-                                                       (+ (second lc) 1))
-                                                 (list 4 'left)
-                                                 (list (- (first rc) 1)
-                                                       (- (second rc) 1)))))
-   ((and (= (second lc) 4)
-         (equal (second b) 'left)) (cons (move 0 4 'right)
-                                         (helper (list (first lc)
-                                                       (- (second lc) 4))
-                                                 (list 4 'right)
-                                                 (list (first rc)
-                                                       (+ (second rc) 4)))))
-   ((and (> (first lc) 4)
-         (equal (second b) 'left)) (cons (move 4 0 'right)
-                                         (helper (list (- (first lc) 4)
-                                                       (second lc))
-                                                 (list 4 'right)
-                                                 (list (+ (first rc) 4)
-                                                       (second rc)))))
-   ((and (<= (first lc) 4)
-         (equal (second b) 'left)) (list (move (first lc) 0 'right)))
-   (t (cons (move 1 0 'left)
-            (helper (list (+ (first lc) 1)
-                          (second lc))
-                    (list 4 'left)
-                    (list (- (first rc) 1)
-                          (second rc)))))))
-            
+           (equal b 'left))
+  (move 2 2 'right))
+   ;((= (second lc) 4) (move 0 4 'right))
+   ;((> (first lc) 4) (move 4 0 'right))
+   ;((< (first lc) 4) (move (first lc) 0 'right))))
+
+(definec alg-right (lc :count b :side rc :count) :tl
+  (declare (ignorable lc b rc))
+  :ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
+           (> (+ (first lc) (first rc) (second lc) (second rc)) 8)
+           (equal b 'right))
+  (move 1 1 'left))#|ACL2s-ToDo-Line|#
+
+   ;(t (move 1 0 'left))))
+#|
+(definec alg-final (lc :count b :side rc :count) :tl
+  (declare (ignorable lc b rc))
+  :ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
+           (> (+ (first lc) (first rc) (second lc) (second rc)) 8)
+           (and (= (first lc) (second lc))
+                (= (first rc) (second rc))
+                (= (first lc) 4)
+                (= (second lc) 4))
+  (list (move 0 4 'right)
+        (
+|#
+
+(definec alg-help (lc :count b :side rc :count) :tl
+  :ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
+           (> (+ (first lc) (first rc) (second lc) (second rc)) 8)
+           (implies (equal b 'left)
+                    (>= (first lc) 4))
+           (implies (equal b 'right)
+                    (and (> (first rc) 0)
+                         (>= (first lc) 3)))
+           (and (= (first lc) (second lc))
+                (= (first rc) (second rc))))
+           #|
+           (implies (= (second rc) 0)
+                    (equal b 'left))
+           (implies (>= (second lc) 4)
+                    (and (= (first lc) (second lc))
+                         (= (first rc) (second rc))))
+           (implies (and (< (second lc) 4)
+                         (equal b 'left))
+                    (= (second lc) 0))
+           (implies (= (second rc) 0)
+                    (= (first rc) 0))
+           (implies (> (second rc) 0)
+                    (> (first rc) 0)))|#
+                    
+  (cond
+   ((and (= (first lc) 4)
+         (= (second lc) 4)
+         (equal b 'left)) (list (move 0 4 'right)
+                                (move 1 0 'left)
+                                (move 4 0 'right)
+                                (move 1 0 'left)
+                                (move 2 0 'right)))
+   ((equal b 'left) (cons (move 2 2 'right)
+                          (alg-help (list (- (first lc) 2)
+                                          (- (second lc) 2))
+                                    'right
+                                    (list (+ (first rc) 2)
+                                          (+ (second rc) 2)))))
+                                          
+   ((equal b 'right) (cons (move 1 1 'left)
+                          (alg-help (list (+ (first lc) 1)
+                                          (+ (second lc) 1))
+                                    'left
+                                    (list (- (first rc) 1)
+                                          (- (second rc) 1)))))))
 
 ;
-(definec (lc :count b :boat rc :count) :tl
-  (
-
-;; Prints the rest of the moves
-(defun tradalg (lc b rc)
+(definec simplealg (lc :count b :side rc :count) :tl
+  (declare (ignorable b rc))
+  :ic (and (and (= (first rc) 0)
+                (= (second rc) 0))
+           (= (first lc) (second lc))
+           (equal b 'left))
   (cond 
-   ((and (= (first lc) 0) (= (second lc) 0)) '())
-   ((and (<= (+ (first lc) (second lc)) 4)
-         (equal (second b) 'left)) (move (first lc) (second lc) 'right))
-   ((and (= (second lc) 3) (list (move 2 2 'right)
-                            (move 1 1 'left)
-                            (move 2 2 'right)))
-   ((= (second lc) 4) (list (move 2 2 'right)
-                            (move 1 1 'left)
-                            (move 2 2 'right)
-                            (move 1 1 'left)
-                            (move 2 2 'right)))
-   (t (helper lc b rc))))
+   ((= (first lc) 0) '())
+   ((<= (+ (first lc) (second lc)) 4) (move (first lc) (second lc) 'right))
+   ((= (first lc) 3) (list (move 2 2 'right)
+                           (move 1 1 'left)
+                           (move 2 2 'right)))
+   ((= (first lc) 4) (list (move 2 2 'right)
+                           (move 1 1 'left)
+                           (move 2 2 'right)
+                           (move 1 1 'left)
+                           (move 2 2 'right)))
+   (t (alg-left lc b rc))))
+
+
+;; find case that is terminating over time
+;; running out of time to terminate
+;; look for thing that is changing over time
+;; measure function, decreasing in every time step
+;; measure function has to decrease every time on the recursive calls
+;; figure out the measure function, closer to base case, base case will run
+;; proof will be a termination proof about helper
+;; termination proof is not enough to prove validity
+
+
+;; correctness proof => if (valid initial state), returns a valid final state
+;; if execute moves, all on the right side
+;; need a way to show that the steps get to the right state
+
+;; 1) function that takes in a list of moves and initial state => final state
+;; 2) (test? '(implies ...)) focus on this part FIRST
+;; 3) then think about prove algo is correct, part of that is defthm
+;; (if (and (s is a valid state) (l is a list of moves from running (helper s))) 
+;;  then the result of simulating l from state s is a valid final state)
+;; (test? '(implies ...))
+
+;; function that simulates moves (way easier)
+;; takes in list of moves and initial state => gives back final state
+;; move blank to blank and then does it, gives final state
+
+#|
+To-Do
+- write a measure function (termination proof is the meat)
+- write a simulator, (initial state and list of moves => execute them properly)
+- (test? '(implies ...))
+- after completion of (test? ...) then reach out to Josh :)
+- no need to broaden the invariants
+|#
 
 
 
