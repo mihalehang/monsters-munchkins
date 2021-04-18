@@ -1,13 +1,6 @@
-; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
-; (Nothing to see here!  Your actual file is after this initialization code);
-(make-event
- (er-progn
-  (set-deferred-ttag-notes t state)
-  (value '(value-triple :invisible))))
 
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
 
+<<<<<<< HEAD
 ;Common base theory for all modes.
 #+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
 (include-book "acl2s/base-theory" :dir :system :ttags :all)
@@ -64,6 +57,8 @@
 ; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
 ;$ACL2s-SMode$;ACL2s
 (set-ccg-time-limit nil)
+=======
+>>>>>>> 4469f9731e863e4613d4e8ebfac929d1a6a2bb0e
 ;; Represents the number of Monsters
 ;(defdata monsters nat)
 ;; Represents the number of Munchkins
@@ -80,6 +75,7 @@
 ;; Number of Monsters and Munchkins respectively on a river bank
 (defdata count (list nat nat))
 
+<<<<<<< HEAD
 #|
 (definec which-side (lc :count b :side rc :count) :tl
   (declare (ignorable lc rc))
@@ -109,8 +105,24 @@
 #|
 (definec alg-final (lc :count b :side rc :count) :tl
   (declare (ignorable lc b rc))
+=======
+;; Capacity and the side the boat is on
+(defdata boat (list nat side))
+
+;; Traditional Algorithm
+
+;; Shouldn't have a function this long, running out of time to prove all of them
+;; Solution: simplify it into even more helper functions
+;; Move left and move right function... try to split off changes into other functions
+
+;; Prints the directions in case that the 
+;; Monsters and Munchkins counts are greater than 4
+(definec helper (lc :count b :boat rc :count) :tl
+           ;; number of munchkins = number of monsters
+>>>>>>> 4469f9731e863e4613d4e8ebfac929d1a6a2bb0e
   :ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
            (> (+ (first lc) (first rc) (second lc) (second rc)) 8)
+<<<<<<< HEAD
            (and (= (first lc) (second lc))
                 (= (first rc) (second rc))
                 (= (first lc) 4)
@@ -172,6 +184,106 @@
                 (= (second rc) 0))
            (= (first lc) (second lc))
            (equal b 'left))
+=======
+           ;; if more than 0 munchkins on left side, 
+           ;; there should be more munchkins than monsters on left
+           (implies (not (zp (second lc)))
+             (>= (second lc) (first lc)))
+           ;; if more than 0 munchkins on right side, 
+           ;; there should be more munchkins than monsters on right
+           (implies (not (zp (second rc)))
+             (>= (second rc) (first rc)))
+           ;; if more than 0 munchkins on right side and
+           ;; boat is on the right side, there should be 
+           ;; more munchkins than monsters on right and there
+           ;; should be more than 0 monsters
+           (implies (and (not (zp (second rc)))
+                         (equal (second b) 'right))
+             (and (>= (second rc) (first rc))
+                  (> (first rc) 0)))
+           ;; if 0 munchkins on right side there should 
+           ;; also be 0 monsters on right side
+           (implies (zp (second rc))
+                    (zp (first rc))))
+  (cond 
+   ((and (> (second lc) 4)
+         (equal (second b) 'left)) (cons (move 2 2 'right)
+                                         (helper (list (- (first lc) 2) 
+                                                       (- (second lc) 2))
+                                                 (list 4 'right)
+                                                 (list (+ (first rc) 2)
+                                                       (+ (second rc) 2)))))
+   ((and (> (second lc) 0)
+         (equal (second b) 'right)) (cons (move 1 1 'left)
+                                         (helper (list (+ (first lc) 1) 
+                                                       (+ (second lc) 1))
+                                                 (list 4 'left)
+                                                 (list (- (first rc) 1)
+                                                       (- (second rc) 1)))))
+   ((and (= (second lc) 4)
+         (equal (second b) 'left)) (cons (move 0 4 'right)
+                                         (helper (list (first lc)
+                                                       (- (second lc) 4))
+                                                 (list 4 'right)
+                                                 (list (first rc)
+                                                       (+ (second rc) 4)))))
+   ((and (> (first lc) 4)
+         (equal (second b) 'left)) (cons (move 4 0 'right)
+                                         (helper (list (- (first lc) 4)
+                                                       (second lc))
+                                                 (list 4 'right)
+                                                 (list (+ (first rc) 4)
+                                                       (second rc)))))
+   ((and (<= (first lc) 4)
+         (equal (second b) 'left)) (list (move (first lc) 0 'right)))
+   (t (cons (move 1 0 'left)
+            (helper (list (+ (first lc) 1)
+                          (second lc))
+                    (list 4 'left)
+                    (list (- (first rc) 1)
+                          (second rc)))))))
+
+;; find case that is terminating over time
+;; running out of time to terminate
+;; look for thing that is changing over time
+;; measure function, decreasing in every time step
+;; measure function has to decrease every time on the recursive calls
+;; figure out the measure function, closer to base case, base case will run
+;; proof will be a termination proof about helper
+;; termination proof is not enough to prove validity
+
+
+;; correctness proof => if (valid initial state), returns a valid final state
+;; if execute moves, all on the right side
+;; need a way to show that the steps get to the right state
+
+;; 1) function that takes in a list of moves and initial state => final state
+;; 2) (test? '(implies ...)) focus on this part FIRST
+;; 3) then think about prove algo is correct, part of that is defthm
+;; (if (and (s is a valid state) (l is a list of moves from running (helper s))) 
+;;  then the result of simulating l from state s is a valid final state)
+;; (test? '(implies ...))
+
+;; function that simulates moves (way easier)
+;; takes in list of moves and initial state => gives back final state
+;; move blank to blank and then does it, gives final state
+
+#|
+To-Do
+- write a measure function (termination proof is the meat)
+- write a simulator, (initial state and list of moves => execute them properly)
+- (test? '(implies ...))
+- after completion of (test? ...) then reach out to Josh :)
+- no need to broaden the invariants
+|#
+
+;
+;(definec (lc :count b :boat rc :count) :tl
+  ;(
+
+;; Prints the rest of the moves
+(defun tradalg (lc b rc)
+>>>>>>> 4469f9731e863e4613d4e8ebfac929d1a6a2bb0e
   (cond 
    ((= (first lc) 0) '())
    ((<= (+ (first lc) (second lc)) 4) (move (first lc) (second lc) 'right))
