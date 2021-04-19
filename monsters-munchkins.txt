@@ -51,16 +51,7 @@ Traditional Algorithm.
 Note:
 It is trivial to imagine an algorithm for B > 4, as if it is possible with B = 4, simply
 follow the same algorithm as if B = 4 anyways. For B < 4, the problem is impossible with 
-M+m < B. [Proof included later]
-
-
-Generalized Algorithm:
-
-1. In the starting state,
-	a. if on any side there are more monsters and munchkins, reject.
-	b. if on both sides the total number of monsters is greater than the number of munchkins, reject.
-	c. ????
-2. ???????????
+M+m < B.
 
 
 

@@ -7,6 +7,6 @@ This is the repo for our 'Monsters and Munchkins' Project.
 It contains:
 
 * Our progress report
-* Our implementation of the traditional algorithm in Racket (functional)
-* Our implementation of the traditional algorithm in ACL2s (nonfunctional)
+* Our prototype of the algorithm in Racket
+* Our implementation of the algorithm in ACL2s
 * A text file with the pseudocode for the algorithm
