@@ -1,75 +1,11 @@
-; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
-; (Nothing to see here!  Your actual file is after this initialization code);
-(make-event
- (er-progn
-  (set-deferred-ttag-notes t state)
-  (value '(value-triple :invisible))))
 
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
-
-;Common base theory for all modes.
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/base-theory" :dir :system :ttags :all)
-
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/custom" :dir :system :ttags :all)
-
-;; guard-checking-on is in *protected-system-state-globals* so any
-;; changes are reverted back to what they were if you try setting this
-;; with make-event. So, in order to avoid the use of progn! and trust
-;; tags (which would not have been a big deal) in custom.lisp, I
-;; decided to add this here.
-;; 
-;; How to check (f-get-global 'guard-checking-on state)
-;; (acl2::set-guard-checking :nowarn)
-(acl2::set-guard-checking :all)
-
-;Settings common to all ACL2s modes
-(acl2s-common-settings)
-;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
-
-(acl2::xdoc acl2s::defunc) ; almost 3 seconds
-
-; Non-events:
-;(set-guard-checking :none)
-
-(set-inhibit-warnings! "Invariant-risk" "theory")
-
-(in-package "ACL2")
-(redef+)
-(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
-  (declare (xargs :stobjs state)
-	   (ignore val active-book-name include-bookp deferred-p))
-  state)
-
-(defun print-deferred-ttag-notes-summary (state)
-  (declare (xargs :stobjs state))
-  state)
-
-(defun notify-on-defttag (val active-book-name include-bookp state)
-  (declare (xargs :stobjs state)
-	   (ignore val active-book-name include-bookp))
-  state)
-(redef-)
-
-(acl2::in-package "ACL2S")
-
-; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
-;$ACL2s-SMode$;ACL2s
 ;; Termination proof of Traditional Algorithm
 
-(set-termination-method :measure)
-(set-well-founded-relation n<)
-(set-defunc-typed-undef nil)
-(set-defunc-generalize-contract-thm nil)
-(set-gag-mode nil)
+;(set-termination-method :measure)
+;(set-well-founded-relation n<)
+;(set-defunc-typed-undef nil)
+;(set-defunc-generalize-contract-thm nil)
+;(set-gag-mode nil)
 
 ;; Represents the number of Monsters
 ;(defdata monsters nat)
@@ -87,32 +23,19 @@
 ;; Number of Monsters and Munchkins respectively on a river bank
 (defdata count (list nat nat))
 
-;; data definitions for types of moves
-(defdata move-left (list 'move nat 'monsters 'and nat 'munchkins 'to 'the 'left))
-(defdata move-right (list 'move nat 'monsters 'and nat 'munchkins 'to 'the 'right))
-(defdata move (oneof move-left move-right))
-
-; data definitions for types of list of moves
-(defdata lom-start-left (oneof '()
-                               (cons move-right '())
-                               (cons move-right (cons move-left lom-start-left))))
-(defdata lom-start-right (oneof '()
-                                (cons move-left '())
-                               (cons move-left (cons move-right lom-start-right))))
-(defdata lom (oneof lom-start-left lom-start-right))
-
-(set-ignore-ok t)
+;(set-ignore-ok t)
 
 ;; Measure function
 
-(definec alg-measure (lc :count b :side rc :count) :nat ;; alg-help vs alg
-  (if (and (equal b 'left) (> (first lc) 4))
-    (1+ (first lc)) 0))#|ACL2s-ToDo-Line|#
-
+(definec alg-help-measure (lc :count b :side) :nat 
+  (if (and (equal b 'left) (! (and (= (first lc) 4)
+         (= (second lc) 4))))
+    (1+ (first lc)) 0))
 
 ; helper function for the algorithm, recursively deals with cases
 ; where there are more than 4 starting monsters and munchkins
 (definec alg-help (lc :count b :side rc :count) :tl
+  ;(declare (xargs :measure (if (and (countp lc) (sidep b) (countp rc)) (alg-measure lc b rc) 0)))
            ;; must have equal monsters and munchkins
   :ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
            ;; must have more than 4 monsters and 4 munchkins
@@ -145,23 +68,46 @@
                                           (+ (second rc) 1))))))))
 
 ;; Termination Proof
-Conjecture alg-terminates:
-(implies (and (countp lc) 
+Conjecture alg-help-terminates:
+(implies (and (countp lc)
+              (= (first lc) (second lc))
+              (> (second lc) 4)
               (sidep b)
-              (count rc))
-         (< (alg-measure (list (1+ (first lc)) (second lc)) b rc)
-            (alg-measure lc b rc)))
+              (equal b 'left))
+         (< (alg-help-measure (list (- (first lc) 1) (second lc)) b)
+            (alg-help-measure lc b)))
 
 Context:
 C1. (countp lc)
-C2. (sidep b)
-C3. (countp rc)
+C2. (= (first lc) (second lc))
+C3. (> (second lc) 4)
+C4. (sidep b)
+C5. (equal b 'left)
+
+Derived Context:
+D1. (countp (list (1- (first lc)) (second lc))) {Def countp, car-cdr axioms, C1, C2, C3}
 
 Goal:
-(< (alg-measure (list (1- (first lc)) (second lc)) b rc)
-            (alg-measure lc b rc))
+(< (alg-help-measure (list (1- (first lc)) (second lc)) b)
+            (alg-help-measure lc b))
 
 Proof:
-
+(alg-help-measure lc b)
+= {Def alg-help-measure, C1, C2, C3, C4, C5}
+(+ (first lc) 1)
+> {Arith}
+(first lc)
+= {Def alg-help-measure, car-cdr axioms, C1, C2, C3, C4, C5, D1}
+(alg-help-measure (list (1- (first lc)) (second lc)) b)
 
 QED
+
+;; have a fxn thats not recursive, no need to do a termination argument
+;; all it does is expand to other function calls that terminates.
+;; assume everything terminates already (this is referring to alg)
+;; so, shown alg-help-terminates, got rid of hypo that doesn't terminates
+;; shows it's true, it's always decreasing, 
+;; know that alg terminates because it only calls terminate or other things terminate
+;; ^^ argument for termination of alg in addition to ACL2s also terminating
+;; bewteen boat on left and right and left, number of monsters on left
+;; always decreasing the number of monsters, add back more monsters
