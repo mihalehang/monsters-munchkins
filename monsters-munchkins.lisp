@@ -64,18 +64,11 @@
 ; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
 ;$ACL2s-SMode$;ACL2s
 (set-ccg-time-limit nil)
-;; Represents the number of Monsters
-;(defdata monsters nat)
-;; Represents the number of Munchkins
-;(defdata munchkins nat)
-;; Represents the capacity of the boat
-;(defdata capacity nat)
-;; Represents which side the boat is on
-(defdata side (oneof 'left 'right))
 
-;; Direction statement
-(definec move (mon :nat mun :nat side :side) :tl
-  (list 'move mon 'monsters 'and mun 'munchkins 'to 'the side))
+;;;;;;;;;;;;;; Data definitions ;;;;;;;;;;;;;;;
+
+; data definition of a side that the boat can be on
+(defdata side (oneof 'left 'right))
 
 ;; Number of Monsters and Munchkins respectively on a river bank
 (defdata count (list nat nat))
@@ -93,6 +86,15 @@
                                 (cons move-left '())
                                (cons move-left (cons move-right lom-start-right))))
 (defdata lom (oneof lom-start-left lom-start-right))
+
+
+
+;;;;;;;;;;;;;; Algorithm functions ;;;;;;;;;;;;
+
+;; returns a list that represents a movement in the game
+(definec move (mon :nat mun :nat side :side) :move
+  (list 'move mon 'monsters 'and mun 'munchkins 'to 'the side))
+
 
 ; helper function for the algorithm, recursively deals with cases
 ; where there are more than 4 starting monsters and munchkins
@@ -156,6 +158,10 @@
    ;; if more complicated case, call helper
    (t (alg-help lc b rc))))
 
+
+;;;;;;;;;;;;;;; Simulator functions ;;;;;;;;;;;;
+
+
 ; simulate a single move in the game
 (definec simulate-move (m :move lc :count b :side rc :count) :tl
   (declare (ignorable b))
@@ -177,31 +183,62 @@
            (+ (second lc) (fifth m)))
      'left
      (list (- (first rc) (second m))
-           (- (second rc) (fifth m))))))#|ACL2s-ToDo-Line|#
+           (- (second rc) (fifth m))))))
 
-#|
-(definec check-move (m :move lc :count b :side rc :count) :boolean
-  :ic (if (equal b 'left)
-        (move-rightp m)
-        (move-leftp m))
-  (if (equal b 'left)
-    (and (<= (second m) (first lc))
-         (<= (fifth m) (second lc)))
-    (and (<= (second m) (first rc))
-         (<= (fifth m) (second rc)))))
-|#
-    
 ; simulate the execution of a list of moves in a game
-(definec simulate (lom :lom lc :count b :side rc :count) :tl
-  :ic (if (equal b 'left)
-        (lom-start-leftp lom)
-        (lom-start-rightp lom))
+(defun simulate (lom lc b rc)
   (cond
    ((endp lom) (list lc b rc))
-   ((consp lom) (simulate (rest lom)
-                          (first (simulate-move (first lom) lc b rc))
-                          (second (simulate-move (first lom) lc b rc))
-                          (third (simulate-move (first lom) lc b rc))))))
+   (t (simulate (rest lom)
+                (first (simulate-move (first lom) lc b rc))
+                (second (simulate-move (first lom) lc b rc))
+                (third (simulate-move (first lom) lc b rc))))))
+
+
+;;;;;;;;;; Valid State functions and Test? ;;;;;;;;;
+
+; data definition for a game state
+(defdata state (list count side count)) 
+
+; check if given state is a valid start
+(definec is-valid-start (s :state) :boolean
+  (and (equal (second s) 'left)
+       (= (first (third s)) (second (third s)))
+       (= (first (first s)) (second (first s)))))
+
+; check if given state is a valid end
+(definec is-valid-end (s :state) :boolean
+  (and (equal (second s) 'right)
+       (= (first (third s)) (second (third s)))
+       (= (first (first s)) 0)
+       (= (second (first s)) 0)))
+
+; valid start state example
+(defconst *valid-example* (list '(5 5) 'left '(0 0)))
+
+; example of a correct path to valid end state
+(defconst *correct-path* (alg-help 
+                          (first *valid-example*)
+                          (second *valid-example*)
+                          (third *valid-example*)))
+
+; this is what we're trying to check for? 
+; CHECK WITH JOSH
+(test? '(implies (is-valid-start s)
+                 (is-valid-end (simulate (alg-help (first s) (second s) (third s))
+                                         (first s)
+                                         (second s)
+                                         (third s)))))
+
+; real example that returns true
+(implies (is-valid-start *valid-example*)
+         (is-valid-end (simulate *correct-path* 
+                                 (first *valid-example*)
+                                 (second *valid-example*)
+                                 (third *valid-example*))))#|ACL2s-ToDo-Line|#
+
+
+
 ;; find case that is terminating over time
 ;; running out of time to terminate
 ;; look for thing that is changing over time
