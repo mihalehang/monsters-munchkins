@@ -1,69 +1,4 @@
-; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
-; (Nothing to see here!  Your actual file is after this initialization code);
-(make-event
- (er-progn
-  (set-deferred-ttag-notes t state)
-  (value '(value-triple :invisible))))
 
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
-
-;Common base theory for all modes.
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/base-theory" :dir :system :ttags :all)
-
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/custom" :dir :system :ttags :all)
-
-;; guard-checking-on is in *protected-system-state-globals* so any
-;; changes are reverted back to what they were if you try setting this
-;; with make-event. So, in order to avoid the use of progn! and trust
-;; tags (which would not have been a big deal) in custom.lisp, I
-;; decided to add this here.
-;; 
-;; How to check (f-get-global 'guard-checking-on state)
-;; (acl2::set-guard-checking :nowarn)
-(acl2::set-guard-checking :all)
-
-;Settings common to all ACL2s modes
-(acl2s-common-settings)
-;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
-(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
-
-#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
-
-(acl2::xdoc acl2s::defunc) ; almost 3 seconds
-
-; Non-events:
-;(set-guard-checking :none)
-
-(set-inhibit-warnings! "Invariant-risk" "theory")
-
-(in-package "ACL2")
-(redef+)
-(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
-  (declare (xargs :stobjs state)
-	   (ignore val active-book-name include-bookp deferred-p))
-  state)
-
-(defun print-deferred-ttag-notes-summary (state)
-  (declare (xargs :stobjs state))
-  state)
-
-(defun notify-on-defttag (val active-book-name include-bookp state)
-  (declare (xargs :stobjs state)
-	   (ignore val active-book-name include-bookp))
-  state)
-(redef-)
-
-(acl2::in-package "ACL2S")
-
-; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
-;$ACL2s-SMode$;ACL2s
-(set-ccg-time-limit nil)
 
 ;;;;;;;;;;;;;; Data definitions ;;;;;;;;;;;;;;;
 
@@ -186,7 +121,10 @@
            (- (second rc) (fifth m))))))
 
 ; simulate the execution of a list of moves in a game
-(defun simulate (lom lc b rc)
+(definec simulate (lom :lom lc :count b :side rc :count) :tl
+  :ic (if (equal b 'left)
+        (lom-start-leftp lom)
+        (lom-start-rightp lom))
   (cond
    ((endp lom) (list lc b rc))
    (t (simulate (rest lom)
@@ -196,7 +134,7 @@
 
 
 ;;;;;;;;;; Valid State functions and Test? ;;;;;;;;;
-
+        
 ; data definition for a game state
 (defdata state (list count side count)) 
 
@@ -235,7 +173,73 @@
          (is-valid-end (simulate *correct-path* 
                                  (first *valid-example*)
                                  (second *valid-example*)
-                                 (third *valid-example*))))#|ACL2s-ToDo-Line|#
+                                 (third *valid-example*))))
+
+(definec greater-case (s :state) :boolean
+  (and (> (caar s) 4)
+       (> (second (first s)) 4)))
+
+Conjecture alg-proof:
+(implies (and (is-valid-start s)
+              (greater-case s))
+         (is-valid-end (simulate (alg-help (first s) 
+                                           (second s) 
+                                           (third s))
+                                         (first s)
+                                         (second s)
+                                         (third s))))
+
+Context:
+C1. (is-valid-start s)
+C2. (greater-case s)
+
+Derived Context:
+D1. (sidep s) { Def is-valid-start, Def greater-case, C1, C2 }
+D2. (countp (first s)) { D1 }
+D3. (countp (third s)) { D1 }
+D4. (equal 'left (second s)) { Def is-valid-start, C1 }
+D5. (and (> (caar s) 4)
+         (> (second (first s)) 4)) { Def greater-case, C2 }
+
+Goal:
+(is-valid-end (simulate (alg-help (first s) 
+                                  (second s) 
+                                  (third s))
+                        (first s)
+                        (second s)
+                        (third s)))
+
+Proof:
+
+
+
+#|
+(defthm bruh (implies (and (is-valid-start s)
+                           (statep s)
+                           (> (caar s) 4)
+                           (equal 'left (second s))
+                           (> (second (car s)) 4))
+                 (is-valid-end (simulate (alg-help (first s) (second s) (third s))
+                                         (first s)
+                                         (second s)
+                                         (third s)))))
+|#
+
+;; instead of doing what we're doing, simulation alongside the steps that result in
+;; could instead -> write simulator, have something that runs as single stepper
+;; have algorithm run the simulator first step and produce a new thing,
+;; want to express the property that we care about (what we have might be fine)
+;; ever gets into a situation where there were more munchkins than monsters
+;; some constraints... want to ensure that this doesn't happen, at the end of the day
+;; we have a solution
+
+;; show wer'e never in a bad state, can just add another input contract to alg-help
+
+;; ideally write a function that does one step at a time
+
+;; where do we sign up for presentations
+
+#|ACL2s-ToDo-Line|#
 
 
 
