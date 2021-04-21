@@ -87,7 +87,8 @@
                                (cons move-left (cons move-right lom-start-right))))
 (defdata lom (oneof lom-start-left lom-start-right))
 
-
+; data definition for a game state
+(defdata state (list count side count boolean))
 
 ;;;;;;;;;;;;;; Algorithm functions ;;;;;;;;;;;;
 
@@ -98,7 +99,7 @@
 
 ; helper function for the algorithm, recursively deals with cases
 ; where there are more than 4 starting monsters and munchkins
-(definec alg-help (lc :count b :side rc :count) :tl
+(definec alg-help (lc :count b :side rc :count) :lom-start-left
            ;; must have equal monsters and munchkins
   :ic (and (= (+ (first lc) (first rc)) (+ (second lc) (second rc)))
            ;; must have more than 4 monsters and 4 munchkins
@@ -131,7 +132,7 @@
                                           (+ (second rc) 1))))))))
 
 ; algorithm for solving a game of monsters and munchkins
-(definec alg (lc :count b :side rc :count) :tl
+(definec alg (lc :count b :side rc :count) :lom-start-left
   (declare (ignorable b rc))
            ;; both sides must have an equal amount of monsters and
            ;; munchkins
@@ -144,7 +145,7 @@
    ((= (first lc) 0) '())
    ;; if total monsters and munchkins are less than boat capacity,
    ;; move them all over
-   ((<= (+ (first lc) (second lc)) 4) (move (first lc) (second lc) 'right))
+   ((<= (+ (first lc) (second lc)) 4) (list (move (first lc) (second lc) 'right)))
    ;; hardcoded case with 3 monsters and 3 munchkins
    ((= (first lc) 3) (list (move 2 2 'right)
                            (move 1 1 'left)
@@ -161,44 +162,59 @@
 
 ;;;;;;;;;;;;;;; Simulator functions ;;;;;;;;;;;;
 
+(definec valid-move (m :move lc :count b :side rc :count) :boolean
+  (if (equal b 'left)
+    (and (move-rightp m)
+         (>= (first lc) (second m))
+         (>= (second lc) (fifth m)))
+    (and (move-leftp m)
+         (>= (first rc) (second m))
+         (>= (second rc) (fifth m)))))
 
+(acl2s-defaults :set testing-enabled nil)
 ; simulate a single move in the game
-(definec simulate-move (m :move lc :count b :side rc :count) :tl
+(definecd simulate-move (m :move lc :count b :side rc :count f :boolean) :state
   (declare (ignorable b))
       ; if the boat is on the left side, move should be towards right
       ; (and vice versa)
-  :ic (if (equal b 'left)
-        (move-rightp m)
-        (move-leftp m))
   ;; update lc, b, and rc depending on move
-  (if (move-rightp m)
-    (list 
-     (list (- (first lc) (second m))
-           (- (second lc) (fifth m)))
-     'right
-     (list (+ (first rc) (second m))
-           (+ (second rc) (fifth m))))
-    (list
-     (list (+ (first lc) (second m))
-           (+ (second lc) (fifth m)))
-     'left
-     (list (- (first rc) (second m))
-           (- (second rc) (fifth m))))))
+  (if f
+    (list lc b rc f)
+    (cond 
+     ((and (move-rightp m)
+           (equal b 'left)
+           (valid-move m lc b rc)) (list 
+                                    (list (- (first lc) (second m))
+                                          (- (second lc) (fifth m)))
+                                    'right
+                                    (list (+ (first rc) (second m))
+                                          (+ (second rc) (fifth m)))
+                                    nil))
+     ((and (move-leftp m)
+           (equal b 'right)
+           (valid-move m lc b rc)) (list
+                                    (list (+ (first lc) (second m))
+                                          (+ (second lc) (fifth m)))
+                                    'left
+                                    (list (- (first rc) (second m))
+                                          (- (second rc) (fifth m)))
+                                    nil))
+     (t (list lc b rc t)))))#|ACL2s-ToDo-Line|#
+
 
 ; simulate the execution of a list of moves in a game
-(defun simulate (lom lc b rc)
+(definec simulate (lom :lom lc :count b :side rc :count f :boolean) :state
   (cond
-   ((endp lom) (list lc b rc))
-   (t (simulate (rest lom)
-                (first (simulate-move (first lom) lc b rc))
-                (second (simulate-move (first lom) lc b rc))
-                (third (simulate-move (first lom) lc b rc))))))
+   ((endp lom) (list lc b rc f))
+   (t (let ((res (simulate-move (first lom) lc b rc f)))
+            (simulate (rest lom)
+                (first res)
+                (second res)
+                (third res)
+                (fourth res))))))
 
 
 ;;;;;;;;;; Valid State functions and Test? ;;;;;;;;;
-
-; data definition for a game state
-(defdata state (list count side count)) 
 
 ; check if given state is a valid start
 (definec is-valid-start (s :state) :boolean
@@ -235,11 +251,10 @@
          (is-valid-end (simulate *correct-path* 
                                  (first *valid-example*)
                                  (second *valid-example*)
-                                 (third *valid-example*))))#|ACL2s-ToDo-Line|#
+                                 (third *valid-example*))))
 
 
-
-;; find case that is terminating over time
+; find case that is terminating over time
 ;; running out of time to terminate
 ;; look for thing that is changing over time
 ;; measure function, decreasing in every time step
