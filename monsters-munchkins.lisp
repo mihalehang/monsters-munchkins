@@ -171,9 +171,8 @@
          (>= (first rc) (second m))
          (>= (second rc) (fifth m)))))
 
-(acl2s-defaults :set testing-enabled nil)
 ; simulate a single move in the game
-(definecd simulate-move (m :move lc :count b :side rc :count f :boolean) :state
+(definec simulate-move (m :move lc :count b :side rc :count f :boolean) :state
   (declare (ignorable b))
       ; if the boat is on the left side, move should be towards right
       ; (and vice versa)
@@ -199,13 +198,22 @@
                                     (list (- (first rc) (second m))
                                           (- (second rc) (fifth m)))
                                     nil))
-     (t (list lc b rc t)))))#|ACL2s-ToDo-Line|#
+     (t (list lc b rc t)))))
+
+(definec change-side (b :side) :side
+  (if (equal b 'left)
+    'right
+    'left))#|ACL2s-ToDo-Line|#
 
 
 ; simulate the execution of a list of moves in a game
 (definec simulate (lom :lom lc :count b :side rc :count f :boolean) :state
+  #|:ic (if (equal b 'left)
+        (lom-start-leftp lom)
+        (lom-start-rightp lom))|#
   (cond
    ((endp lom) (list lc b rc f))
+   (f (list lc b rc f))
    (t (let ((res (simulate-move (first lom) lc b rc f)))
             (simulate (rest lom)
                 (first res)
@@ -220,14 +228,18 @@
 (definec is-valid-start (s :state) :boolean
   (and (equal (second s) 'left)
        (= (first (third s)) (second (third s)))
-       (= (first (first s)) (second (first s)))))
+       (= (first (first s)) (second (first s)))
+       (> (first (first s)) 4)
+       (> (second (first s)) 4)
+       (not (fourth s))))
 
 ; check if given state is a valid end
 (definec is-valid-end (s :state) :boolean
   (and (equal (second s) 'right)
        (= (first (third s)) (second (third s)))
        (= (first (first s)) 0)
-       (= (second (first s)) 0)))
+       (= (second (first s)) 0)
+       (not (fourth s))))
 
 ; valid start state example
 (defconst *valid-example* (list '(5 5) 'left '(0 0)))
@@ -237,14 +249,15 @@
                           (first *valid-example*)
                           (second *valid-example*)
                           (third *valid-example*)))
-
+(set-gag-mode nil)
 ; this is what we're trying to check for? 
 ; CHECK WITH JOSH
-(test? '(implies (is-valid-start s)
+(test? (implies (is-valid-start s)
                  (is-valid-end (simulate (alg-help (first s) (second s) (third s))
                                          (first s)
                                          (second s)
-                                         (third s)))))
+                                         (third s)
+                                         (fourth s)))))
 
 ; real example that returns true
 (implies (is-valid-start *valid-example*)
