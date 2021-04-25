@@ -160,6 +160,49 @@
    (t (alg-help lc b rc))))
 
 
+;;;;;;;;;;;;;;; Valid-lom functions ;;;;;;;;;;;;
+
+; last-moves
+(definec last-moves (lom :lom) :boolean
+  (equal (list (move 0 4 'right)
+               (move 1 0 'left)
+               (move 4 0 'right)
+               (move 1 0 'left)
+               (move 2 0 'right)) lom))
+
+; check if given state is a valid start
+(definec is-valid-start (s :state) :boolean
+  (and (equal (second s) 'left)
+       (= (first (third s)) (second (third s)))
+       (= (first (first s)) (second (first s)))
+       (> (first (first s)) 4)
+       (> (second (first s)) 4)
+       (not (fourth s))))
+
+; valid game length = 5 + (2 * (m - 4))
+(definec game-length (s :state) :nat
+  :ic (is-valid-start s)
+  (+ 5 (* 2 (- (caar s) 4))))
+                           
+(definec valid-game-lom (lom :lom) :boolean
+  (cond
+   ((last-moves lom) t)
+   ((consp lom) (and (equal (first lom) (move 2 2 'right))
+                     (equal (second lom) (move 1 1 'left))
+                     (valid-game-lom (rest (rest lom)))))
+   (t nil)))
+
+(test? (implies (and (statep s)
+                     (is-valid-start s))
+                (let ((moves (alg-help (first s) (second s) (third s))))
+                  (and (= (length moves)
+                          (game-length s))
+                       (valid-game-lom moves)))))#|ACL2s-ToDo-Line|#
+
+
+
+
+
 ;;;;;;;;;;;;;;; Simulator functions ;;;;;;;;;;;;
 
 (definec valid-move (m :move lc :count b :side rc :count) :boolean
@@ -172,7 +215,7 @@
          (>= (second rc) (fifth m)))))
 
 ; simulate a single move in the game
-(definec simulate-move (m :move lc :count b :side rc :count f :boolean) :state
+(definecd simulate-move (m :move lc :count b :side rc :count f :boolean) :state
   (declare (ignorable b))
       ; if the boat is on the left side, move should be towards right
       ; (and vice versa)
@@ -203,14 +246,10 @@
 (definec change-side (b :side) :side
   (if (equal b 'left)
     'right
-    'left))#|ACL2s-ToDo-Line|#
-
+    'left))
 
 ; simulate the execution of a list of moves in a game
-(definec simulate (lom :lom lc :count b :side rc :count f :boolean) :state
-  #|:ic (if (equal b 'left)
-        (lom-start-leftp lom)
-        (lom-start-rightp lom))|#
+(defun simulate (lom lc b rc f)
   (cond
    ((endp lom) (list lc b rc f))
    (f (list lc b rc f))
@@ -252,7 +291,8 @@
 (set-gag-mode nil)
 ; this is what we're trying to check for? 
 ; CHECK WITH JOSH
-(test? (implies (is-valid-start s)
+(test? (implies (and (statep s)
+                     (is-valid-start s))
                  (is-valid-end (simulate (alg-help (first s) (second s) (third s))
                                          (first s)
                                          (second s)
