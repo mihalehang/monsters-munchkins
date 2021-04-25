@@ -5,11 +5,12 @@ This is the repo for our 'Monsters and Munchkins' Project, the final project to 
 
 It contains:
 
-* Our progress report
+* [Our progress report](https://github.com/mihalehang/monsters-munchkins/blob/main/Logic_Final_Project_Progress_Report.pdf)
 * Our final paper
-* Our prototype of the algorithm in Racket (mainly for informal tinkering)
-* Our final implementation of the algorithm in ACL2s, along with tests for correctness
-* A text file with the pseudocode for the algorithm
+* [Our prototype of the algorithm in Racket (mainly for informal tinkering)](https://github.com/mihalehang/monsters-munchkins/blob/main/Traditional%20Algo%20munchkins.rkt)
+* [Our final implementation of the algorithm in ACL2s, along with tests for correctness](https://github.com/mihalehang/monsters-munchkins/blob/main/monsters-munchkins.lisp)
+* [A termination proof for our algorithm, in the way we have learned in lecture](https://github.com/mihalehang/monsters-munchkins/blob/main/mmproof.lisp)
+* [A text file with the pseudocode for the algorithm](https://github.com/mihalehang/monsters-munchkins/blob/main/monsters-munchkins.txt)
 
 # Setup
 To view our algorithm and tests, open monsters-munchkins.lisp in Eclipse as we have typically done in class. If you are not/was not a CS2800 student, 
