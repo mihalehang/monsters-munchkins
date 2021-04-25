@@ -5,6 +5,7 @@
 (define (move mon mun side)
   (list 'move mon 'monsters 'and mun 'munchkins 'to 'the side))
 
+; algorithm helper
 (define (helper lc b rc)
   (cond 
    ((and (> (second lc) 4)
@@ -45,7 +46,7 @@
                           (second rc)))))))
             
 
-;; Prints the rest of the moves
+;; main algorithm
 (define (tradalg lc b rc)
   (cond 
    ((and (= (first lc) 0) (= (second lc) 0)) '())

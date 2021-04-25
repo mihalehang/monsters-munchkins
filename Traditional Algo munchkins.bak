@@ -1,6 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname |Munchkins code|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname |Traditional Algo munchkins|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 ;; Direction statement
 (define (move mon mun side)
   (list 'move mon 'monsters 'and mun 'munchkins 'to 'the side))
@@ -14,7 +14,7 @@
                                                  (list 4 'right)
                                                  (list (+ (first rc) 2)
                                                        (+ (second rc) 2)))))
-   ((and (>= (second lc) 0)
+   ((and (> (second lc) 0)
          (equal? (second b) 'right)) (cons (move 1 1 'left)
                                          (helper (list (+ (first lc) 1) 
                                                        (+ (second lc) 1))
@@ -33,8 +33,8 @@
                                          (helper (list (- (first lc) 4)
                                                        (second lc))
                                                  (list 4 'right)
-                                                 (list (+ (second rc) 4)
-                                                       (second lc)))))
+                                                 (list (+ (first rc) 4)
+                                                       (second rc)))))
    ((and (<= (first lc) 4)
          (equal? (second b) 'left)) (list (move (first lc) 0 'right)))
    (else (cons (move 1 0 'left)
@@ -49,7 +49,8 @@
 (define (tradalg lc b rc)
   (cond 
    ((and (= (first lc) 0) (= (second lc) 0)) '())
-   ((<= (+ (first lc) (second lc)) 4) (move (first lc) (second lc) 'right))
+   ((and (<= (+ (first lc) (second lc)) 4)
+         (equal? (second b) 'left)) (move (first lc) (second lc) 'right))
    ((= (second lc) 3) (list (move 2 2 'right)
                             (move 1 1 'left)
                             (move 2 2 'right)))
@@ -58,4 +59,4 @@
                             (move 2 2 'right)
                             (move 1 1 'left)
                             (move 2 2 'right)))
-   ((> (second lc) 4) (helper lc b rc))))
+   (else (helper lc b rc))))
